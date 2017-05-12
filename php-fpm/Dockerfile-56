@@ -45,7 +45,7 @@ MAINTAINER Mahmoud Zalt <mahmoud@zalt.me>
 ARG INSTALL_SOAP=false
 RUN if [ ${INSTALL_SOAP} = true ]; then \
     # Install the soap extension
-    apt-get -y update && \
+    apt-get update -yqq && \
     apt-get -y install libxml2-dev php-soap && \
     docker-php-ext-install soap \
 ;fi
@@ -90,6 +90,17 @@ RUN if [ ${INSTALL_PHPREDIS} = true ]; then \
     pecl install -o -f redis \
     &&  rm -rf /tmp/pear \
     &&  docker-php-ext-enable redis \
+;fi
+
+#####################################
+# Swoole EXTENSION FOR PHP 5
+#####################################
+
+ARG INSTALL_SWOOLE=false
+RUN if [ ${INSTALL_SWOOLE} = true ]; then \
+    # Install Php Swoole Extension
+    pecl install swoole \
+    &&  docker-php-ext-enable swoole \
 ;fi
 
 #####################################
@@ -148,13 +159,13 @@ RUN if [ ${INSTALL_EXIF} = true ]; then \
 # PHP Aerospike:
 #####################################
 
-ARG INSTALL_AEROSPIKE_EXTENSION=false
-ENV INSTALL_AEROSPIKE_EXTENSION ${INSTALL_AEROSPIKE_EXTENSION}
+ARG INSTALL_AEROSPIKE=false
+ENV INSTALL_AEROSPIKE ${INSTALL_AEROSPIKE}
 # Copy aerospike configration for remote debugging
 COPY ./aerospike.ini /usr/local/etc/php/conf.d/aerospike.ini
-RUN if [ ${INSTALL_AEROSPIKE_EXTENSION} = true ]; then \
+RUN if [ ${INSTALL_AEROSPIKE} = true ]; then \
     # Install the php aerospike extension
-    curl -L -o /tmp/aerospike-client-php.tar.gz "https://github.com/luciano-jr/aerospike-client-php/archive/master.tar.gz" \
+    curl -L -o /tmp/aerospike-client-php.tar.gz "https://github.com/aerospike/aerospike-client-php/archive/3.4.14.tar.gz" \
     && mkdir -p aerospike-client-php \
     && tar -C aerospike-client-php -zxvf /tmp/aerospike-client-php.tar.gz --strip 1 \
     && ( \
@@ -219,7 +230,7 @@ RUN if [ ${INSTALL_INTL} = true ]; then \
 ARG INSTALL_GHOSTSCRIPT=false
 RUN if [ ${INSTALL_GHOSTSCRIPT} = true ]; then \
     # Install the ghostscript extension for PDF editing
-    apt-get update && \
+    apt-get update -yqq && \
     apt-get install -y poppler-utils ghostscript \
 ;fi
 

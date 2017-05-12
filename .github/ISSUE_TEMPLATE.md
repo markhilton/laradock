@@ -1,11 +1,8 @@
 ### Info:
-- Docker version (`$ docker --version`):
-- Laradock commit (`$ git rev-parse HEAD`):
-- System (`place x between the [ ]`):
-	- [ ] Mac
-	- [ ] PC
-	- [ ] Linux
-	- Info:
+- Docker version (`$ docker --version`): 
+- Laradock commit (`$ git rev-parse HEAD`): 
+- System info (Mac, PC, Linux): 
+- System info disto/version: 
 
 ### Issue:
 ##### What seems to be going wrong?
@@ -24,6 +21,6 @@ _____
 
 ### Relevant Code:
 
-  ```
-  // place code here
-  ```
+```
+// place code here
+```

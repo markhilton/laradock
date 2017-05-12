@@ -46,9 +46,13 @@ MAINTAINER Mahmoud Zalt <mahmoud@zalt.me>
 # Add a non-root user to prevent files being created with root permissions on host machine.
 ARG PUID=1000
 ARG PGID=1000
-RUN groupadd -g $PGID laradock && \
-    useradd -u $PUID -g laradock -m laradock
 
+ENV PUID ${PUID}
+ENV PGID ${PGID}
+
+RUN groupadd -g ${PGID} laradock && \
+    useradd -u ${PUID} -g laradock -m laradock && \
+    apt-get update -yqq
 
 #####################################
 # SOAP:
@@ -60,8 +64,8 @@ ENV INSTALL_SOAP ${INSTALL_SOAP}
 
 RUN if [ ${INSTALL_SOAP} = true ]; then \
   # Install the PHP SOAP extension
-  apt-get -y update && \
   add-apt-repository -y ppa:ondrej/php && \
+  apt-get update -yqq && \
   apt-get -y install libxml2-dev php5.6-soap \
 ;fi
 
@@ -128,7 +132,6 @@ RUN echo "" >> ~/.bashrc && \
 ARG INSTALL_XDEBUG=false
 RUN if [ ${INSTALL_XDEBUG} = true ]; then \
     # Load the xdebug extension only with phpunit commands
-    apt-get update && \
     apt-get install -y --force-yes php5.6-xdebug && \
     sed -i 's/^/;/g' /etc/php/5.6/cli/conf.d/20-xdebug.ini && \
     echo "alias phpunit='php -dzend_extension=xdebug.so /var/www/vendor/bin/phpunit'" >> ~/.bashrc \
@@ -150,7 +153,7 @@ ENV BLACKFIRE_CLIENT_TOKEN ${BLACKFIRE_CLIENT_TOKEN}
 RUN if [ ${INSTALL_XDEBUG} = false -a ${INSTALL_BLACKFIRE} = true ]; then \
     curl -L https://packagecloud.io/gpg.key | apt-key add - && \
     echo "deb http://packages.blackfire.io/debian any main" | tee /etc/apt/sources.list.d/blackfire.list && \
-    apt-get update && \
+    apt-get update -yqq && \
     apt-get install blackfire-agent \
 ;fi
 
@@ -275,15 +278,15 @@ RUN if [ ${INSTALL_YARN} = true ]; then \
 #####################################
 USER root
 
-ARG INSTALL_AEROSPIKE_EXTENSION=true
-ENV INSTALL_AEROSPIKE_EXTENSION ${INSTALL_AEROSPIKE_EXTENSION}
+ARG INSTALL_AEROSPIKE=true
+ENV INSTALL_AEROSPIKE ${INSTALL_AEROSPIKE}
 
 # Copy aerospike configration for remote debugging
 COPY ./aerospike.ini /etc/php/5.6/cli/conf.d/aerospike.ini
 
-RUN if [ ${INSTALL_AEROSPIKE_EXTENSION} = true ]; then \
+RUN if [ ${INSTALL_AEROSPIKE} = true ]; then \
     # Install the php aerospike extension
-    curl -L -o /tmp/aerospike-client-php.tar.gz "https://github.com/luciano-jr/aerospike-client-php/archive/master.tar.gz" \
+    curl -L -o /tmp/aerospike-client-php.tar.gz "https://github.com/aerospike/aerospike-client-php/archive/3.4.14.tar.gz" \
     && mkdir -p aerospike-client-php \
     && tar -C aerospike-client-php -zxvf /tmp/aerospike-client-php.tar.gz --strip 1 \
     && ( \
@@ -295,25 +298,8 @@ RUN if [ ${INSTALL_AEROSPIKE_EXTENSION} = true ]; then \
     && rm /tmp/aerospike-client-php.tar.gz \
 ;fi
 
-RUN if [ ${INSTALL_AEROSPIKE_EXTENSION} = false ]; then \
+RUN if [ ${INSTALL_AEROSPIKE} = false ]; then \
     rm /etc/php/5.6/cli/conf.d/aerospike.ini \
-;fi
-
-#####################################
-# PHP V8JS:
-#####################################
-USER root
-
-ARG INSTALL_V8JS_EXTENSION=false
-ENV INSTALL_V8JS_EXTENSION ${INSTALL_V8JS_EXTENSION}
-
-RUN if [ ${INSTALL_V8JS_EXTENSION} = true ]; then \
-    # Install the php V8JS extension
-    add-apt-repository -y ppa:pinepain/libv8-5.4 \
-    && apt-get update \
-    && apt-get install -y php-dev php-pear libv8-5.4 \
-    && pecl install v8js \
-    && echo "extension=v8js.so" >> /etc/php/5.6/cli/php.ini \
 ;fi
 
 #####################################
@@ -371,7 +357,6 @@ ENV INSTALL_LINUXBREW ${INSTALL_LINUXBREW}
 RUN if [ ${INSTALL_LINUXBREW} = true ]; then \
 
     # Preparation
-    apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y build-essential make cmake scons curl git \
       ruby autoconf automake autoconf-archive \
@@ -380,7 +365,7 @@ RUN if [ ${INSTALL_LINUXBREW} = true ]; then \
       libexpat-dev libncurses-dev && \
 
     # Install the Linuxbrew
-    git clone https://github.com/Homebrew/linuxbrew.git ~/.linuxbrew && \
+    git clone --depth=1 https://github.com/Homebrew/linuxbrew.git ~/.linuxbrew && \
 
     echo "" >> ~/.bashrc && \
     echo 'export PKG_CONFIG_PATH"=/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig:/usr/lib/pkgconfig:/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/lib64/pkgconfig:/usr/share/pkgconfig:$PKG_CONFIG_PATH"' >> ~/.bashrc && \

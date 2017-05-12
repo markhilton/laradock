@@ -3,13 +3,19 @@
 #### halt script on error
 set -e
 
+echo '##### Print docker version'
+docker --version
+
+echo '##### Print environment'
+env | sort
+
 #### Build the Docker Images
 if [ -n "${PHP_VERSION}" ]; then
     cp env-example .env
     sed -i -- "s/PHP_VERSION=.*/PHP_VERSION=${PHP_VERSION}/g" .env
     sed -i -- 's/=false/=true/g' .env
     cat .env
-    docker-compose build
+    docker-compose build ${BUILD_SERVICE}
     docker images
 fi
 
@@ -24,7 +30,9 @@ if [ -n "${HUGO_VERSION}" ]; then
     mv ./${HUGO_BIN}/${HUGO_BIN} $HOME/bin/hugo
 
     # Remove existing docs
-    rm -r ./docs
+    if [ -d "./docs" ]; then
+        rm -r ./docs
+    fi
 
     # Build docs
     cd DOCUMENTATION
